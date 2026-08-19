@@ -43,7 +43,9 @@ let cfg = {
   videoPath: '', // 空 = 用插件自带 bg-default.mp4
   opacity: 0.2, // 视频可见度
   videoPosition: 50, // 视频内容在窗口内的水平位置 0=最左 50=居中 100=最右
-  sidebarAlpha: 0.6 // 侧栏深蓝不透明度
+  sidebarAlpha: 0.6, // 侧栏底色不透明度
+  sidebarColor: '#0D2667', // 侧栏底色（RGB，默认深蓝）
+  showBadge: false // 右上角调试徽标（默认隐藏，日常使用不碍眼）
 }
 
 function loadCfg(ctx) {
@@ -63,7 +65,9 @@ function loadCfg(ctx) {
       videoPath: s.get('videoPath', ''),
       opacity: s.get('opacity', 0.2),
       videoPosition: s.get('videoPosition', 50),
-      sidebarAlpha: s.get('sidebarAlpha', 0.6)
+      sidebarAlpha: s.get('sidebarAlpha', 0.6),
+      sidebarColor: s.get('sidebarColor', '#0D2667'),
+      showBadge: s.get('showBadge', false)
     }
   } catch (e) {
     /* storage 不可用时用默认值 */
@@ -77,9 +81,21 @@ function saveCfg(ctx) {
     ctx.storage.set('opacity', cfg.opacity)
     ctx.storage.set('videoPosition', cfg.videoPosition)
     ctx.storage.set('sidebarAlpha', cfg.sidebarAlpha)
+    ctx.storage.set('sidebarColor', cfg.sidebarColor)
+    ctx.storage.set('showBadge', cfg.showBadge)
   } catch (e) {
     /* ignore */
   }
+}
+
+// hex(#RRGGBB) -> rgba(r,g,b,a)
+function hexToRgba(hex, a) {
+  let h = String(hex).replace('#', '')
+  if (h.length === 3) h = h.split('').map(c => c + c).join('')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${a})`
 }
 
 function toFileURL(p) {
@@ -145,11 +161,12 @@ function processBackgrounds() {
     const wRatio = r.width / vw
     const hRatio = r.height / vh
     if (wRatio >= 0.5 && hRatio >= 0.4) {
+      // 主区始终透明，透出背景视频（主区色调由官方明暗模式控制）
       el.style.setProperty('background', 'transparent', 'important')
       cleared++
       nukePseudo(el)
     } else if (wRatio >= 0.08 && wRatio <= 0.48 && hRatio >= 0.55) {
-      const sbg = `rgba(13, 38, 103, ${cfg.sidebarAlpha})`
+      const sbg = hexToRgba(cfg.sidebarColor, cfg.sidebarAlpha)
       el.style.setProperty('background', sbg, 'important')
       tinted++
       nukePseudo(el)
@@ -210,7 +227,12 @@ function upsertVideo() {
   v.style.objectPosition = cfg.videoPosition + '% 50%'
   v.style.opacity = String(cfg.opacity)
   // 诊断徽标：显示 cfg 值与实际应用值，验证水平位置是否真正生效
+  // 默认隐藏（showBadge=false），可在设置页开启便于再开发时看运行状态
   let dbg = document.getElementById('aria-bg-badge')
+  if (!cfg.showBadge) {
+    if (dbg) dbg.remove()
+    return v
+  }
   if (!dbg) {
     dbg = document.createElement('div')
     dbg.id = 'aria-bg-badge'
@@ -259,11 +281,11 @@ function SettingsPage({ ctx }) {
   const set = (k, val) => {
     setForm(f => ({ ...f, [k]: val }))
     // 实时预览：滑块/开关一改就应用（无需点保存）
-    if (k === 'enabled' || k === 'opacity' || k === 'videoPosition' || k === 'videoPath') {
+    if (k === 'enabled' || k === 'opacity' || k === 'videoPosition' || k === 'videoPath' || k === 'showBadge') {
       cfg[k] = val
       upsertVideo()
     }
-    if (k === 'sidebarAlpha') {
+    if (k === 'sidebarAlpha' || k === 'sidebarColor') {
       cfg[k] = val
       processBackgrounds()
     }
@@ -307,6 +329,56 @@ function SettingsPage({ ctx }) {
           onCheckedChange: v => set('enabled', v)
         })
       ),
+
+      // 调试徽标开关
+      row(
+        '显示调试徽标',
+        jsx(Switch, {
+          checked: form.showBadge,
+          onCheckedChange: v => set('showBadge', v)
+        })
+      ),
+      jsx('p', {
+        className: 'text-(--ui-text-tertiary) -mt-4 text-xs',
+        children: '开启后右上角显示 cfg / 实际应用值，方便再开发时查看运行状态；日常使用建议关闭'
+      }),
+
+      // 侧栏颜色
+      row(
+        '侧栏底色',
+        jsx('input', {
+          type: 'color',
+          value: form.sidebarColor,
+          onChange: e => set('sidebarColor', e.target.value),
+          className: 'h-8 w-16 cursor-pointer rounded border border-(--ui-border) bg-transparent'
+        })
+      ),
+      // 侧栏透明度
+      row(
+        '侧栏不透明度',
+        jsxs('div', {
+          className: 'flex w-72 items-center gap-3',
+          children: [
+            jsx('input', {
+              type: 'range',
+              min: '0.3',
+              max: '1',
+              step: '0.05',
+              value: form.sidebarAlpha,
+              onChange: e => set('sidebarAlpha', parseFloat(e.target.value)),
+              className: 'w-40 accent-(--ui-accent)'
+            }),
+            jsx('span', {
+              className: 'text-sm tabular-nums',
+              children: Math.round(form.sidebarAlpha * 100) + '%'
+            })
+          ]
+        })
+      ),
+      jsx('p', {
+        className: 'text-(--ui-text-tertiary) -mt-4 text-xs',
+        children: '调高越实、调低越透（视频越明显）'
+      }),
 
       // 视频路径
       row(
