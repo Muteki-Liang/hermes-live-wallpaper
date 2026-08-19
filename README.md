@@ -1,4 +1,4 @@
-<img width="1811" height="1080" alt="image" src="https://github.com/user-attachments/assets/79544cc1-39af-493f-b017-bfa48cc9cb72" /># 🎬 Hermes 背景视频插件 · Ver.0.1 BETA
+#🎬 Hermes 背景视频插件 · Ver.0.1 BETA
 
 为 Hermes 桌面客户端添加**全屏循环背景视频**——视频以 20% 可见度铺满界面背景，不影响 UI 可读性；左右侧栏自动半透明透出视频；带完整图形化设置页。
 
@@ -10,6 +10,7 @@
 - 🎨 左右侧边栏半透明（默认深蓝 60%），透出底部视频
 - 🖼 **视频内容水平位置可调**（0% 靠左 / 50% 居中 / 100% 靠右）
 - ⚙️ **提供图形化设置页**（侧边栏「背景视频」入口，或 `Ctrl+K` 搜"背景视频"）：
+  <img width="1811" height="1080" alt="image" src="https://github.com/user-attachments/assets/79544cc1-39af-493f-b017-bfa48cc9cb72" />
   - 启用 / 关闭背景视频
   - 视频文件路径（支持中文/空格）
   （这里直接把你要调用的视频目录复制进来就行，记得最后以你要调用的视频全名结尾，千万要带扩展名！！）
