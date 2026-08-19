@@ -46,7 +46,7 @@ let cfg = {
   sidebarAlpha: 0.6 // 侧栏深蓝不透明度
 }
 
-function loadCfg(ctx)
+function loadCfg(ctx) {
     // 解析默认视频路径（打包自带的 bg-default.mp4）
     if (!cfg.videoPath) {
       resolveDefaultPath().then(p => {
@@ -55,7 +55,7 @@ function loadCfg(ctx)
           saveCfg(ctx)
         }
       })
-    } {
+    }
   try {
     const s = ctx.storage
     cfg = {
