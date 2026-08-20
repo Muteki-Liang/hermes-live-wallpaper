@@ -135,7 +135,7 @@ function nukePseudo(el) {
 function deepCleanSidebar(el) {
   const kids = el.querySelectorAll('*')
   for (const k of kids) {
-    if (k.id === 'aria-bg-video' || k.id === 'aria-bg-badge' || k.id === 'aria-bg-style') continue
+    if (k.id === 'aria-bg-media' || k.id === 'aria-bg-badge' || k.id === 'aria-bg-style') continue
     const cs = getComputedStyle(k)
     const c = cs.backgroundColor || ''
     const i = cs.backgroundImage || ''
@@ -154,7 +154,7 @@ function processBackgrounds() {
   let tinted = 0
   const all = document.querySelectorAll('body *')
   for (const el of all) {
-    if (el.id === 'aria-bg-video' || el.id === 'aria-bg-badge' || el.id === 'aria-bg-style') continue
+    if (el.id === 'aria-bg-media' || el.id === 'aria-bg-badge' || el.id === 'aria-bg-style') continue
     const r = el.getBoundingClientRect()
     if (r.width < 60 || r.height < 60) continue
     if (!hasBg(el)) continue
@@ -187,22 +187,28 @@ function ensureStyle() {
   document.head.appendChild(s)
 }
 
-function upsertVideo() {
+function upsertMedia() {
   if (!cfg.enabled) {
-    const old = document.getElementById('aria-bg-video')
+    const old = document.getElementById('aria-bg-media')
     if (old) old.remove()
     return null
   }
-  let v = document.getElementById('aria-bg-video')
-  if (!v) {
-    v = document.createElement('video')
-    v.id = 'aria-bg-video'
-    v.autoplay = true
-    v.loop = true
-    v.muted = true
-    v.playsInline = true
-    v.preload = 'auto'
-    Object.assign(v.style, {
+  const isImage = /\.(png|jpe?g)$/i.test(cfg.videoPath || '')
+  const wantTag = isImage ? 'IMG' : 'VIDEO'
+  let el = document.getElementById('aria-bg-media')
+  // 类型变了（video↔img）必须重建，两种标签不能互转
+  if (el && el.tagName !== wantTag) { el.remove(); el = null }
+  if (!el) {
+    el = document.createElement(wantTag)
+    el.id = 'aria-bg-media'
+    if (wantTag === 'VIDEO') {
+      el.autoplay = true
+      el.loop = true
+      el.muted = true
+      el.playsInline = true
+      el.preload = 'auto'
+    }
+    Object.assign(el.style, {
       position: 'fixed',
       top: '0',
       left: '0',
@@ -216,22 +222,24 @@ function upsertVideo() {
       border: '0',
       margin: '0'
     })
-    document.body.appendChild(v)
-    const pr = v.play()
-    if (pr && pr.catch) pr.catch(() => {})
+    document.body.appendChild(el)
+    if (wantTag === 'VIDEO') {
+      const pr = el.play()
+      if (pr && pr.catch) pr.catch(() => {})
+    }
   }
   // 应用当前配置：窗口保持全屏，内容用 object-position 在窗口内移动
-  v.src = toFileURL(cfg.videoPath)
-  v.style.left = '0'
-  v.style.width = '100vw'
-  v.style.objectPosition = cfg.videoPosition + '% 50%'
-  v.style.opacity = String(cfg.opacity)
+  el.src = toFileURL(cfg.videoPath)
+  el.style.left = '0'
+  el.style.width = '100vw'
+  el.style.objectPosition = cfg.videoPosition + '% 50%'
+  el.style.opacity = String(cfg.opacity)
   // 诊断徽标：显示 cfg 值与实际应用值，验证水平位置是否真正生效
   // 默认隐藏（showBadge=false），可在设置页开启便于再开发时看运行状态
   let dbg = document.getElementById('aria-bg-badge')
   if (!cfg.showBadge) {
     if (dbg) dbg.remove()
-    return v
+    return el
   }
   if (!dbg) {
     dbg = document.createElement('div')
@@ -257,14 +265,14 @@ function upsertVideo() {
   }
   dbg.textContent =
     `🎬 cfg: pos=${cfg.videoPosition}% op=${cfg.opacity}\n` +
-    `applied: objectPosition=${v.style.objectPosition}`
-  return v
+    `applied: objectPosition=${el.style.objectPosition}`
+  return el
 }
 
 function injectLoop() {
   if (typeof document === 'undefined' || !document.body) return
   ensureStyle()
-  upsertVideo()
+  upsertMedia()
   processBackgrounds()
 }
 
@@ -283,7 +291,7 @@ function SettingsPage({ ctx }) {
     // 实时预览：滑块/开关一改就应用（无需点保存）
     if (k === 'enabled' || k === 'opacity' || k === 'videoPosition' || k === 'videoPath' || k === 'showBadge') {
       cfg[k] = val
-      upsertVideo()
+      upsertMedia()
     }
     if (k === 'sidebarAlpha' || k === 'sidebarColor') {
       cfg[k] = val
@@ -380,9 +388,9 @@ function SettingsPage({ ctx }) {
         children: '调高越实、调低越透（视频越明显）'
       }),
 
-      // 视频路径
+      // 视频/图片路径
       row(
-        '视频文件路径',
+        '背景媒体路径',
         jsx('div', {
           className: 'flex w-72 flex-col gap-1',
           children: [
@@ -394,7 +402,7 @@ function SettingsPage({ ctx }) {
             }),
             jsx('span', {
               className: 'text-(--ui-text-tertiary) text-xs',
-              children: '本地视频绝对路径，支持中文/空格'
+              children: '本地视频或图片绝对路径，支持中文/空格。留空用自带视频；填 .jpg/.png 即显示为静态背景（水平位置滑块同样可用）'
             })
           ]
         })
