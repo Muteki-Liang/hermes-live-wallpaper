@@ -74,4 +74,4 @@ Bilibili: 【能把任意本地视频变成hermes客户端皮肤的插件——�
 - 已知限制：视频自动播放需静音（浏览器策略），背景视频不会带声音
 
 ---
-*Made LIANG & Hermes agent · Hermes 桌面背景视频系列 Ver.0.1 BETA · 欢迎反馈与 PR*
+*Created by LIANG. Using Hermes agent, powered by deepseekV4 flash and Hy3 · Hermes 桌面背景视频系列 Ver.1.3 BETA · 欢迎反馈与 PR*
