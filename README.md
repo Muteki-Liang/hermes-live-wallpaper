@@ -54,7 +54,7 @@ Bilibili: 【能把任意本地视频变成hermes客户端皮肤的插件——�
 
 ## 📋 兼容性
 
-- 平台：Windows 优先（macOS/Linux 理论上可用，未完整测试）
+- 平台：Windows 优先（macOS/Linux 理论上可用，安装时需要根据系统实际情况调整安装位置）
 - 客户端：Hermes Desktop v0.20.x
 - 视频格式：MP4 / WebM 等浏览器原生支持格式
 
